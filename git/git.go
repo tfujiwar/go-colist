@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"sort"
 
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -85,5 +86,6 @@ func ChangedFiles(path string, baseBranch string) ([]string, error) {
 		files = append(files, f)
 	}
 
+	sort.Slice(files, func(i, j int) bool { return files[i] < files[j] })
 	return files, nil
 }
