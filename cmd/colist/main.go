@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hmarr/codeowners"
+	"github.com/tfujiwar/go-colist/codeowners"
 	"github.com/tfujiwar/go-colist/git"
 )
 
@@ -39,19 +39,7 @@ func run(baseBranch string) error {
 		return fmt.Errorf("failed to open CODEOWNERS: %w", err)
 	}
 
-	ruleset, err := codeowners.ParseFile(cofile)
-	if err != nil {
-		return fmt.Errorf("failed to parse CODEOWNERS: %w", err)
-	}
-
-	matched := make(map[string]*codeowners.Rule)
-	for _, f := range files {
-		rule, err := ruleset.Match(f)
-		if err != nil {
-			return fmt.Errorf("failed to match CODEOWNERS rule: %w", err)
-		}
-		matched[rule.RawPattern()] = rule
-	}
+	matched, err := codeowners.MatchedRules(cofile, files)
 
 	for _, r := range matched {
 		fmt.Printf("%v: %v\n", r.RawPattern(), r.Owners)
