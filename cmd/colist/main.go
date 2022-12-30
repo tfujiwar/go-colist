@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/tfujiwar/go-colist/codeowners"
 	"github.com/tfujiwar/go-colist/git"
@@ -20,30 +21,35 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := run(baseBranch); err != nil {
+	rules, err := run(".", baseBranch)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
 		os.Exit(1)
 	}
+
+	for _, r := range rules {
+		fmt.Printf("%s: %s\n", r.Pattern, strings.Join(r.CodeOwners, ", "))
+	}
+
 	os.Exit(0)
 }
 
-func run(baseBranch string) error {
-	files, err := git.ChangedFiles(".", baseBranch)
+func run(path string, baseBranch string) ([]*codeowners.Rule, error) {
+	files, err := git.ChangedFiles(path, baseBranch)
 
 	if err != nil {
-		return fmt.Errorf("failed to get changed files: %w", err)
+		return nil, fmt.Errorf("failed to get changed files: %w", err)
 	}
 
-	cofile, err := os.Open(filepath.Join(".", ".github/CODEOWNERS"))
+	cofile, err := os.Open(filepath.Join(path, ".github/CODEOWNERS"))
 	if err != nil {
-		return fmt.Errorf("failed to open CODEOWNERS: %w", err)
+		return nil, fmt.Errorf("failed to open CODEOWNERS: %w", err)
 	}
 
-	matched, err := codeowners.MatchedRules(cofile, files)
-
-	for _, r := range matched {
-		fmt.Printf("%v: %v\n", r.RawPattern(), r.Owners)
+	rules, err := codeowners.MatchedRules(cofile, files)
+	if err != nil {
+		return nil, fmt.Errorf("failed get matched rules: %w", err)
 	}
 
-	return nil
+	return rules, nil
 }
