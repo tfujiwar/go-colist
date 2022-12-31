@@ -1,4 +1,4 @@
-package main
+package colist
 
 import (
 	"os"
@@ -165,7 +165,7 @@ func TestRun(t *testing.T) {
 		return
 	}
 
-	rules, err := run(dir, "", "")
+	rules, err := Main(dir, "", "")
 	if err != nil {
 		t.Error(err)
 		return

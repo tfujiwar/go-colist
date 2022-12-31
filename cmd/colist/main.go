@@ -78,7 +78,7 @@ func main() {
 	log.Printf("[DEBUG] remote     : %v\n", remote)
 	log.Printf("[DEBUG] baseBranch : %v\n", baseBranch)
 
-	rules, err := run(dir, remote, baseBranch)
+	rules, err := colist.Main(dir, remote, baseBranch)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
 		os.Exit(1)
@@ -107,28 +107,4 @@ func usage(w io.Writer) {
 	fmt.Fprintf(w, "  -v, --verbose          : show debug log\n")
 	fmt.Fprintf(w, "  -h, --help             : show this message\n")
 	fmt.Fprintf(w, "\n")
-}
-
-func run(path string, remote string, baseBranch string) ([]*colist.Rule, error) {
-	repo, err := colist.NewRepository(path, remote, baseBranch)
-	if err != nil {
-		return nil, fmt.Errorf("failed to init repo: %w", err)
-	}
-
-	cofile, err := repo.OwnersFile()
-	if err != nil {
-		return nil, fmt.Errorf("failed to open CODEOWNERS: %w", err)
-	}
-
-	files, err := repo.ChangedFiles()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get changed files: %w", err)
-	}
-
-	rules, err := colist.MatchedRules(cofile, files)
-	if err != nil {
-		return nil, fmt.Errorf("failed get matched rules: %w", err)
-	}
-
-	return rules, nil
 }
