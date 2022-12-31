@@ -15,6 +15,11 @@ func main() {
 	var help bool
 	flag.BoolVar(&help, "h", false, "show help")
 	flag.BoolVar(&help, "help", false, "show help")
+
+	var dir string
+	flag.StringVar(&dir, "d", ".", "path to repository directory")
+	flag.StringVar(&dir, "dir", ".", "path to repository directory")
+
 	flag.Parse()
 
 	if help {
@@ -22,24 +27,26 @@ func main() {
 		os.Exit(0)
 	}
 
+	args := flag.Args()
+
 	var remote string
 	var baseBranch string
-	switch len(os.Args) {
-	case 1:
+	switch len(args) {
+	case 0:
 		remote = ""
 		baseBranch = ""
-	case 2:
+	case 1:
 		remote = ""
-		baseBranch = os.Args[1]
-	case 3:
-		remote = os.Args[1]
-		baseBranch = os.Args[2]
+		baseBranch = args[1]
+	case 2:
+		remote = args[1]
+		baseBranch = args[2]
 	default:
 		usage(os.Stderr)
 		os.Exit(1)
 	}
 
-	rules, err := run(".", remote, baseBranch)
+	rules, err := run(dir, remote, baseBranch)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
 		os.Exit(1)
@@ -56,9 +63,13 @@ func usage(w io.Writer) {
 	fmt.Fprintf(w, "List GitHub CODEOWNERS of changed files on a current branch\n")
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Usage:\n")
-	fmt.Fprintf(w, "  colist                        : compare with remote or local main branch\n")
-	fmt.Fprintf(w, "  colist <BASE_BRANCH>          : compare with remote or local <BASE_BRANCH>\n")
-	fmt.Fprintf(w, "  colist <REMOTE> <BASE_BRANCH> : compare with <REMOTE>/<BASE_BRANCH>\n")
+	fmt.Fprintf(w, "  colist [flags]                        : compare with remote or local main branch\n")
+	fmt.Fprintf(w, "  colist [flags] <BASE_BRANCH>          : compare with remote or local <BASE_BRANCH>\n")
+	fmt.Fprintf(w, "  colist [flags] <REMOTE> <BASE_BRANCH> : compare with <REMOTE>/<BASE_BRANCH>\n")
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "Flags:\n")
+	fmt.Fprintf(w, "  -d, --dir  : path to repository directory\n")
+	fmt.Fprintf(w, "  -h, --help : show this message\n")
 	fmt.Fprintf(w, "\n")
 }
 
