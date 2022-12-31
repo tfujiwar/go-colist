@@ -91,19 +91,18 @@ func ChangedFiles(path string, remote string, baseBranch string) ([]string, erro
 		return nil, fmt.Errorf("failed to get diffs: %w", err)
 	}
 
-	fileset := make(map[string]struct{})
-	for _, c := range changes {
-		if c.From.Name != "" {
-			fileset[c.From.Name] = struct{}{}
-		}
-		if c.To.Name != "" {
-			fileset[c.To.Name] = struct{}{}
-		}
-	}
-
 	files := make([]string, 0)
-	for f := range fileset {
-		files = append(files, f)
+	for _, c := range changes {
+		if c.From.Name == c.To.Name {
+			files = append(files, c.From.Name)
+		} else {
+			if c.From.Name != "" {
+				files = append(files, c.From.Name)
+			}
+			if c.To.Name != "" {
+				files = append(files, c.To.Name)
+			}
+		}
 	}
 
 	sort.Slice(files, func(i, j int) bool { return files[i] < files[j] })
