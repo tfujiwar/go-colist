@@ -11,17 +11,26 @@ import (
 )
 
 func main() {
+	var remote string
 	var baseBranch string
 	switch len(os.Args) {
 	case 1:
+		remote = ""
+		baseBranch = ""
 	case 2:
+		remote = ""
 		baseBranch = os.Args[1]
+	case 3:
+		remote = os.Args[1]
+		baseBranch = os.Args[2]
 	default:
-		fmt.Fprintf(os.Stderr, "usage: %s <base-branch>\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "Usage: %s\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "       %s <base-branch>\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "       %s <remote> <base-branch>\n", filepath.Base(os.Args[0]))
 		os.Exit(1)
 	}
 
-	rules, err := run(".", baseBranch)
+	rules, err := run(".", remote, baseBranch)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
 		os.Exit(1)
@@ -34,8 +43,8 @@ func main() {
 	os.Exit(0)
 }
 
-func run(path string, baseBranch string) ([]*codeowners.Rule, error) {
-	files, err := git.ChangedFiles(path, baseBranch)
+func run(path string, remote string, baseBranch string) ([]*codeowners.Rule, error) {
+	files, err := git.ChangedFiles(path, remote, baseBranch)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get changed files: %w", err)

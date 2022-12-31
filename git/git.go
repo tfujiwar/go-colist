@@ -3,15 +3,14 @@ package git
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-var defaultBranches = []string{"main", "master"}
-
-func ChangedFiles(path string, baseBranch string) ([]string, error) {
+func ChangedFiles(path string, remote string, baseBranch string) ([]string, error) {
 	opt := gogit.PlainOpenOptions{DetectDotGit: true}
 	repo, err := gogit.PlainOpenWithOptions(path, &opt)
 	if err != nil {
@@ -33,22 +32,43 @@ func ChangedFiles(path string, baseBranch string) ([]string, error) {
 		return nil, fmt.Errorf("failed to get tree: %w", err)
 	}
 
-	var baseRef *plumbing.Reference
-	if baseBranch != "" {
-		baseRef, err = repo.Reference(plumbing.ReferenceName("refs/heads/"+baseBranch), false)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get base branch: %w", err)
-		}
-	} else {
-		for _, b := range defaultBranches {
-			baseRef, err = repo.Reference(plumbing.ReferenceName("refs/heads/"+b), false)
-			if err == nil {
-				break
+	var refs []string
+	if remote == "" {
+		if baseBranch == "" {
+			refs = []string{
+				"refs/remote/origin/main",
+				"refs/remote/origin/master",
+				"refs/heads/main",
+				"refs/heads/master",
+			}
+		} else {
+			refs = []string{
+				"refs/remote/origin/" + baseBranch,
+				"refs/heads/" + baseBranch,
 			}
 		}
-		if baseRef == nil {
-			return nil, fmt.Errorf("failed to get base branch (main or master)")
+	} else {
+		if baseBranch == "" {
+			refs = []string{
+				"refs/remote/" + remote + "/main",
+				"refs/remote/" + remote + "/master",
+			}
+		} else {
+			refs = []string{
+				"refs/remote/" + remote + "/" + baseBranch,
+			}
 		}
+	}
+
+	var baseRef *plumbing.Reference
+	for _, r := range refs {
+		baseRef, err = repo.Reference(plumbing.ReferenceName(r), false)
+		if err == nil {
+			break
+		}
+	}
+	if baseRef == nil {
+		return nil, fmt.Errorf("failed to get ref: %s", strings.Join(refs, ", "))
 	}
 
 	baseHead, err := repo.CommitObject(baseRef.Hash())

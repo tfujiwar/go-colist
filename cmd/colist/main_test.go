@@ -159,7 +159,7 @@ func TestRun(t *testing.T) {
 		return
 	}
 
-	rules, err := run(dir, "")
+	rules, err := run(dir, "", "")
 	if err != nil {
 		t.Error(err)
 		return
