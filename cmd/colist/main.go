@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/tfujiwar/go-colist/codeowners"
+	"github.com/tfujiwar/go-colist/format"
 	"github.com/tfujiwar/go-colist/git"
 )
 
@@ -52,10 +52,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	for _, r := range rules {
-		fmt.Printf("%s: %s\n", r.Pattern, strings.Join(r.CodeOwners, ", "))
-	}
-
+	format.TextWithIndent(rules, os.Stdout)
 	os.Exit(0)
 }
 

@@ -25,6 +25,9 @@ func MatchedRules(codeownerFile io.Reader, files []string) ([]*Rule, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to match CODEOWNERS rule: %w", err)
 		}
+		if rule == nil {
+			continue
+		}
 
 		owners := make([]string, 0)
 		for _, o := range rule.Owners {

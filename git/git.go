@@ -13,6 +13,7 @@ import (
 
 type Repository struct {
 	currentTree *object.Tree
+	latestTree  *object.Tree
 	baseTree    *object.Tree
 }
 
@@ -35,7 +36,7 @@ func NewRepository(path string, remote string, baseBranch string) (*Repository, 
 
 	tree, err := commit.Tree()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get tree: %w", err)
+		return nil, fmt.Errorf("failed to get current tree: %w", err)
 	}
 
 	var refs []string
@@ -89,17 +90,23 @@ func NewRepository(path string, remote string, baseBranch string) (*Repository, 
 
 	baseTree, err := baseCommits[0].Tree()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get commit: %w", err)
+		return nil, fmt.Errorf("failed to get base tree: %w", err)
+	}
+
+	latestTree, err := baseHead.Tree()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest tree: %w", err)
 	}
 
 	return &Repository{
 		currentTree: tree,
+		latestTree:  latestTree,
 		baseTree:    baseTree,
 	}, nil
 }
 
 func (r *Repository) CodeOwnersFile() (io.Reader, error) {
-	f, err := r.baseTree.File(".github/CODEOWNERS")
+	f, err := r.currentTree.File(".github/CODEOWNERS")
 	if err != nil {
 		return nil, fmt.Errorf("failed to find CODEOWNERS: %w", err)
 	}
