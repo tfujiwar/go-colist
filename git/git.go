@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 
@@ -10,7 +11,12 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-func ChangedFiles(path string, remote string, baseBranch string) ([]string, error) {
+type Repository struct {
+	currentTree *object.Tree
+	baseTree    *object.Tree
+}
+
+func NewRepository(path string, remote string, baseBranch string) (*Repository, error) {
 	opt := gogit.PlainOpenOptions{DetectDotGit: true}
 	repo, err := gogit.PlainOpenWithOptions(path, &opt)
 	if err != nil {
@@ -68,7 +74,7 @@ func ChangedFiles(path string, remote string, baseBranch string) ([]string, erro
 		}
 	}
 	if baseRef == nil {
-		return nil, fmt.Errorf("failed to get ref: %s", strings.Join(refs, ", "))
+		return nil, fmt.Errorf("failed to get any of refs: %s", strings.Join(refs, ", "))
 	}
 
 	baseHead, err := repo.CommitObject(baseRef.Hash())
@@ -86,7 +92,28 @@ func ChangedFiles(path string, remote string, baseBranch string) ([]string, erro
 		return nil, fmt.Errorf("failed to get commit: %w", err)
 	}
 
-	changes, err := object.DiffTree(baseTree, tree)
+	return &Repository{
+		currentTree: tree,
+		baseTree:    baseTree,
+	}, nil
+}
+
+func (r *Repository) CodeOwnersFile() (io.Reader, error) {
+	f, err := r.baseTree.File(".github/CODEOWNERS")
+	if err != nil {
+		return nil, fmt.Errorf("failed to find CODEOWNERS: %w", err)
+	}
+
+	reader, err := f.Reader()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CODEOWNERS: %w", err)
+	}
+
+	return reader, nil
+}
+
+func (r *Repository) ChangedFiles() ([]string, error) {
+	changes, err := object.DiffTree(r.baseTree, r.currentTree)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get diffs: %w", err)
 	}

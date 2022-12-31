@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/tfujiwar/go-colist/codeowners"
@@ -64,15 +63,19 @@ func usage(w io.Writer) {
 }
 
 func run(path string, remote string, baseBranch string) ([]*codeowners.Rule, error) {
-	files, err := git.ChangedFiles(path, remote, baseBranch)
-
+	repo, err := git.NewRepository(path, remote, baseBranch)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get changed files: %w", err)
+		return nil, fmt.Errorf("failed to init repo: %w", err)
 	}
 
-	cofile, err := os.Open(filepath.Join(path, ".github/CODEOWNERS"))
+	cofile, err := repo.CodeOwnersFile()
 	if err != nil {
 		return nil, fmt.Errorf("failed to open CODEOWNERS: %w", err)
+	}
+
+	files, err := repo.ChangedFiles()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get changed files: %w", err)
 	}
 
 	rules, err := codeowners.MatchedRules(cofile, files)
