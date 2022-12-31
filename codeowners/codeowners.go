@@ -13,6 +13,7 @@ type Rule struct {
 	Owners  []string `json:"owners"`
 }
 
+// MatchRules extracts a set of codeowner rules from `codeownerFile“ that match any of `files`.
 func MatchedRules(codeownerFile io.Reader, files []string) ([]*Rule, error) {
 	ruleset, err := codeowners.ParseFile(codeownerFile)
 	if err != nil {

@@ -8,6 +8,12 @@ import (
 	gogit "github.com/go-git/go-git/v5"
 )
 
+// MkTempRepo creates new git repository in dir.
+// - Create a repository
+// - Commit .github/CODEOWNERS, a.txt, b.txt, and c.txt on master branch
+// - Checkout a new branch "feature"
+// - Update b.txt and rename c.txt to d.txt
+// - Commit b.txt, c.txt, and d.txt
 func MkTempRepo(dir string) error {
 	repo, err := gogit.PlainInit(dir, false)
 	if err != nil {

@@ -46,7 +46,7 @@ func main() {
 	var formatFunc func([]*codeowners.Rule, io.Writer) error
 	switch output {
 	case "text":
-		formatFunc = format.TextWithIndent
+		formatFunc = format.Text
 	case "json":
 		formatFunc = format.Json
 	default:

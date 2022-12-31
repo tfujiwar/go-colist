@@ -18,6 +18,9 @@ type Repository struct {
 	baseTree    *object.Tree
 }
 
+// NewRepositoy constructs a new Repository struct.
+// It tries to find baseBranch from remote or local if `remote“ is empty
+// It tries to find main or master branch if `baseBranch“ is empty,
 func NewRepository(path string, remote string, baseBranch string) (*Repository, error) {
 	opt := gogit.PlainOpenOptions{DetectDotGit: true}
 	repo, err := gogit.PlainOpenWithOptions(path, &opt)
