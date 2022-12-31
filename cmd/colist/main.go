@@ -13,17 +13,21 @@ import (
 )
 
 func main() {
+	var output string
+	flag.StringVar(&output, "o", "text", "output format")
+	flag.StringVar(&output, "output", "text", "output format")
+
+	var dir string
+	flag.StringVar(&dir, "d", ".", "repository directory")
+	flag.StringVar(&dir, "dir", ".", "repository directory")
+
+	var verbose bool
+	flag.BoolVar(&verbose, "v", false, "show debug log")
+	flag.BoolVar(&verbose, "verbose", false, "show debug log")
+
 	var help bool
 	flag.BoolVar(&help, "h", false, "show help")
 	flag.BoolVar(&help, "help", false, "show help")
-
-	var verbose bool
-	flag.BoolVar(&verbose, "v", false, "output debug log")
-	flag.BoolVar(&verbose, "verbose", false, "output debug log")
-
-	var dir string
-	flag.StringVar(&dir, "d", ".", "path to repository directory")
-	flag.StringVar(&dir, "dir", ".", "path to repository directory")
 
 	flag.Parse()
 
@@ -37,6 +41,17 @@ func main() {
 		log.SetOutput(os.Stderr)
 	} else {
 		log.SetOutput(io.Discard)
+	}
+
+	var formatFunc func([]*codeowners.Rule, io.Writer) error
+	switch output {
+	case "text":
+		formatFunc = format.TextWithIndent
+	case "json":
+		formatFunc = format.Json
+	default:
+		fmt.Fprintf(os.Stderr, "[ERROR] not supported output: select \"text\" or \"json\"\n")
+		os.Exit(1)
 	}
 
 	args := flag.Args()
@@ -58,13 +73,25 @@ func main() {
 		os.Exit(1)
 	}
 
+	log.Printf("[DEBUG] output     : %v\n", output)
+	log.Printf("[DEBUG] dir        : %v\n", dir)
+	log.Printf("[DEBUG] verbose    : %v\n", verbose)
+	log.Printf("[DEBUG] help       : %v\n", help)
+	log.Printf("[DEBUG] remote     : %v\n", remote)
+	log.Printf("[DEBUG] baseBranch : %v\n", baseBranch)
+
 	rules, err := run(dir, remote, baseBranch)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
 		os.Exit(1)
 	}
 
-	format.TextWithIndent(rules, os.Stdout)
+	err = formatFunc(rules, os.Stdout)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
+		os.Exit(1)
+	}
+
 	os.Exit(0)
 }
 
@@ -77,22 +104,20 @@ func usage(w io.Writer) {
 	fmt.Fprintf(w, "  colist [flags] <REMOTE> <BASE_BRANCH> : compare with <REMOTE>/<BASE_BRANCH>\n")
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Flags:\n")
-	fmt.Fprintf(w, "  -d, --dir  : path to repository directory\n")
-	fmt.Fprintf(w, "  -h, --help : show this message\n")
+	fmt.Fprintf(w, "  -o, --output text|json : output format\n")
+	fmt.Fprintf(w, "  -d, --dir <DIR>        : repository directory\n")
+	fmt.Fprintf(w, "  -v, --verbose          : show debug log\n")
+	fmt.Fprintf(w, "  -h, --help             : show this message\n")
 	fmt.Fprintf(w, "\n")
 }
 
 func run(path string, remote string, baseBranch string) ([]*codeowners.Rule, error) {
-	log.Printf("[DEBUG] path       : %s\n", path)
-	log.Printf("[DEBUG] remote     : %s\n", remote)
-	log.Printf("[DEBUG] baseBranch : %s\n", baseBranch)
-
 	repo, err := git.NewRepository(path, remote, baseBranch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init repo: %w", err)
 	}
 
-	cofile, err := repo.CodeOwnersFile()
+	cofile, err := repo.OwnersFile()
 	if err != nil {
 		return nil, fmt.Errorf("failed to open CODEOWNERS: %w", err)
 	}

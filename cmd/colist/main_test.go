@@ -169,16 +169,16 @@ func TestRun(t *testing.T) {
 		t.Errorf("len(rules) = %v, want %v", len(rules), 2)
 		return
 	}
-	if len(rules[0].CodeOwners) != 1 {
-		t.Errorf("len(rules[0].CodeOwners) = %v, want %v", rules[0].CodeOwners, 1)
+	if len(rules[0].Owners) != 1 {
+		t.Errorf("len(rules[0].Owners) = %v, want %v", rules[0].Owners, 1)
 		return
 	}
-	if len(rules[1].CodeOwners) != 1 {
-		t.Errorf("len(rules[1].CodeOwners) = %v, want %v", rules[1].CodeOwners, 1)
+	if len(rules[1].Owners) != 1 {
+		t.Errorf("len(rules[1].Owners) = %v, want %v", rules[1].Owners, 1)
 		return
 	}
-	if len(rules[2].CodeOwners) != 1 {
-		t.Errorf("len(rules[2].CodeOwners) = %v, want %v", rules[2].CodeOwners, 1)
+	if len(rules[2].Owners) != 1 {
+		t.Errorf("len(rules[2].Owners) = %v, want %v", rules[2].Owners, 1)
 		return
 	}
 
@@ -192,13 +192,13 @@ func TestRun(t *testing.T) {
 		t.Errorf("rules[2].Pattern = %v, want %v", rules[2].Pattern, "d.txt")
 	}
 
-	if rules[0].CodeOwners[0] != "owner-b" {
-		t.Errorf("rules[0].CodeOwners[0] = %v, want %v", rules[0].CodeOwners[0], "owner-b")
+	if rules[0].Owners[0] != "owner-b" {
+		t.Errorf("rules[0].Owners[0] = %v, want %v", rules[0].Owners[0], "owner-b")
 	}
-	if rules[1].CodeOwners[0] != "owner-c" {
-		t.Errorf("rules[1].CodeOwners[0] = %v, want %v", rules[1].CodeOwners[0], "owner-c")
+	if rules[1].Owners[0] != "owner-c" {
+		t.Errorf("rules[1].Owners[0] = %v, want %v", rules[1].Owners[0], "owner-c")
 	}
-	if rules[2].CodeOwners[0] != "owner-d" {
-		t.Errorf("rules[2].CodeOwners[0] = %v, want %v", rules[2].CodeOwners[0], "owner-d")
+	if rules[2].Owners[0] != "owner-d" {
+		t.Errorf("rules[2].Owners[0] = %v, want %v", rules[2].Owners[0], "owner-d")
 	}
 }

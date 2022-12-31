@@ -9,8 +9,8 @@ import (
 )
 
 type Rule struct {
-	Pattern    string
-	CodeOwners []string
+	Pattern string   `json:"pattern"`
+	Owners  []string `json:"owners"`
 }
 
 func MatchedRules(codeownerFile io.Reader, files []string) ([]*Rule, error) {
@@ -36,8 +36,8 @@ func MatchedRules(codeownerFile io.Reader, files []string) ([]*Rule, error) {
 		sort.Slice(owners, func(i, j int) bool { return owners[i] < owners[j] })
 
 		matched[rule.RawPattern()] = &Rule{
-			Pattern:    rule.RawPattern(),
-			CodeOwners: owners,
+			Pattern: rule.RawPattern(),
+			Owners:  owners,
 		}
 	}
 

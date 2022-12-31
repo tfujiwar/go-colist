@@ -112,7 +112,7 @@ func NewRepository(path string, remote string, baseBranch string) (*Repository, 
 	}, nil
 }
 
-func (r *Repository) CodeOwnersFile() (io.Reader, error) {
+func (r *Repository) OwnersFile() (io.Reader, error) {
 	f, err := r.currentTree.File(".github/CODEOWNERS")
 	if err != nil {
 		return nil, fmt.Errorf("failed to find CODEOWNERS: %w", err)
