@@ -1,16 +1,14 @@
-package format
+package colist
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/tfujiwar/go-colist/codeowners"
 )
 
-// Text writes `rules` to `w` as a plain text.
-func Text(rules []*codeowners.Rule, w io.Writer) error {
+// OutputText writes `rules` to `w` as a plain text.
+func OutputText(rules []*Rule, w io.Writer) error {
 	max := 0
 	for _, r := range rules {
 		if max < len(r.Pattern) {
@@ -25,8 +23,8 @@ func Text(rules []*codeowners.Rule, w io.Writer) error {
 	return nil
 }
 
-// Json writes `rules` to `w` as a JSON string.
-func Json(rules []*codeowners.Rule, w io.Writer) error {
+// OutputJson writes `rules` to `w` as a JSON string.
+func OutputJson(rules []*Rule, w io.Writer) error {
 	b, err := json.MarshalIndent(rules, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal: %w", err)

@@ -7,9 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/tfujiwar/go-colist/codeowners"
-	"github.com/tfujiwar/go-colist/format"
-	"github.com/tfujiwar/go-colist/git"
+	"github.com/tfujiwar/go-colist"
 )
 
 func main() {
@@ -43,12 +41,12 @@ func main() {
 		log.SetOutput(io.Discard)
 	}
 
-	var formatFunc func([]*codeowners.Rule, io.Writer) error
+	var formatFunc func([]*colist.Rule, io.Writer) error
 	switch output {
 	case "text":
-		formatFunc = format.Text
+		formatFunc = colist.OutputText
 	case "json":
-		formatFunc = format.Json
+		formatFunc = colist.OutputJson
 	default:
 		fmt.Fprintf(os.Stderr, "[ERROR] not supported output: select \"text\" or \"json\"\n")
 		os.Exit(1)
@@ -111,8 +109,8 @@ func usage(w io.Writer) {
 	fmt.Fprintf(w, "\n")
 }
 
-func run(path string, remote string, baseBranch string) ([]*codeowners.Rule, error) {
-	repo, err := git.NewRepository(path, remote, baseBranch)
+func run(path string, remote string, baseBranch string) ([]*colist.Rule, error) {
+	repo, err := colist.NewRepository(path, remote, baseBranch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init repo: %w", err)
 	}
@@ -127,7 +125,7 @@ func run(path string, remote string, baseBranch string) ([]*codeowners.Rule, err
 		return nil, fmt.Errorf("failed to get changed files: %w", err)
 	}
 
-	rules, err := codeowners.MatchedRules(cofile, files)
+	rules, err := colist.MatchedRules(cofile, files)
 	if err != nil {
 		return nil, fmt.Errorf("failed get matched rules: %w", err)
 	}
