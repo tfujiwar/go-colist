@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 	"io"
+	"log"
 	"sort"
 	"strings"
 
@@ -71,8 +72,10 @@ func NewRepository(path string, remote string, baseBranch string) (*Repository, 
 	for _, r := range refs {
 		baseRef, err = repo.Reference(plumbing.ReferenceName(r), false)
 		if err == nil {
+			log.Printf("[DEBUG] found baseRef : %s\n", r)
 			break
 		}
+		log.Printf("[DEBUG] tried baseRef : %s\n", r)
 	}
 	if baseRef == nil {
 		return nil, fmt.Errorf("failed to get any of refs: %s", strings.Join(refs, ", "))
@@ -98,6 +101,10 @@ func NewRepository(path string, remote string, baseBranch string) (*Repository, 
 		return nil, fmt.Errorf("failed to get latest tree: %w", err)
 	}
 
+	log.Printf("[DEBUG] current commit : %s %s\n", commit.Hash.String()[:8], strings.Split(commit.Message, "\n")[0])
+	log.Printf("[DEBUG] latest commit  : %s %s\n", baseHead.Hash.String()[:8], strings.Split(baseHead.Message, "\n")[0])
+	log.Printf("[DEBUG] merge base     : %s %s\n", baseCommits[0].Hash.String()[:8], strings.Split(baseCommits[0].Message, "\n")[0])
+
 	return &Repository{
 		currentTree: tree,
 		latestTree:  latestTree,
@@ -120,7 +127,7 @@ func (r *Repository) CodeOwnersFile() (io.Reader, error) {
 }
 
 func (r *Repository) ChangedFiles() ([]string, error) {
-	changes, err := object.DiffTree(r.baseTree, r.currentTree)
+	changes, err := object.DiffTree(r.currentTree, r.baseTree)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get diffs: %w", err)
 	}
@@ -128,12 +135,15 @@ func (r *Repository) ChangedFiles() ([]string, error) {
 	files := make([]string, 0)
 	for _, c := range changes {
 		if c.From.Name == c.To.Name {
+			log.Printf("[DEBUG] updated file: %s\n", c.From.Name)
 			files = append(files, c.From.Name)
 		} else {
 			if c.From.Name != "" {
+				log.Printf("[DEBUG] created file: %s\n", c.From.Name)
 				files = append(files, c.From.Name)
 			}
 			if c.To.Name != "" {
+				log.Printf("[DEBUG] deleted file: %s\n", c.To.Name)
 				files = append(files, c.To.Name)
 			}
 		}

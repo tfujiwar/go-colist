@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 
 	"github.com/tfujiwar/go-colist/codeowners"
@@ -16,6 +17,10 @@ func main() {
 	flag.BoolVar(&help, "h", false, "show help")
 	flag.BoolVar(&help, "help", false, "show help")
 
+	var verbose bool
+	flag.BoolVar(&verbose, "v", false, "output debug log")
+	flag.BoolVar(&verbose, "verbose", false, "output debug log")
+
 	var dir string
 	flag.StringVar(&dir, "d", ".", "path to repository directory")
 	flag.StringVar(&dir, "dir", ".", "path to repository directory")
@@ -25,6 +30,13 @@ func main() {
 	if help {
 		usage(os.Stdout)
 		os.Exit(0)
+	}
+
+	if verbose {
+		log.SetFlags(0)
+		log.SetOutput(os.Stderr)
+	} else {
+		log.SetOutput(io.Discard)
 	}
 
 	args := flag.Args()
@@ -37,10 +49,10 @@ func main() {
 		baseBranch = ""
 	case 1:
 		remote = ""
-		baseBranch = args[1]
+		baseBranch = args[0]
 	case 2:
-		remote = args[1]
-		baseBranch = args[2]
+		remote = args[0]
+		baseBranch = args[1]
 	default:
 		usage(os.Stderr)
 		os.Exit(1)
@@ -71,6 +83,10 @@ func usage(w io.Writer) {
 }
 
 func run(path string, remote string, baseBranch string) ([]*codeowners.Rule, error) {
+	log.Printf("[DEBUG] path       : %s\n", path)
+	log.Printf("[DEBUG] remote     : %s\n", remote)
+	log.Printf("[DEBUG] baseBranch : %s\n", baseBranch)
+
 	repo, err := git.NewRepository(path, remote, baseBranch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init repo: %w", err)
