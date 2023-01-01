@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// OutputText writes colists to w as a plain text.
-func OutputText(colists []*ColistEntry, w io.Writer) error {
+// outputText writes colists to w as a plain text.
+func outputText(colists []*ColistEntry, w io.Writer) error {
 	max := 0
 	for _, r := range colists {
 		if max < len(r.Pattern) {
@@ -23,8 +23,8 @@ func OutputText(colists []*ColistEntry, w io.Writer) error {
 	return nil
 }
 
-// OutputJson writes colists to w as a JSON string.
-func OutputJson(colists []*ColistEntry, w io.Writer) error {
+// outputJson writes colists to w as a JSON string.
+func outputJson(colists []*ColistEntry, w io.Writer) error {
 	b, err := json.MarshalIndent(colists, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)

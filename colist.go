@@ -38,7 +38,6 @@ func Run() error {
 	}
 
 	if verbose {
-		log.SetFlags(0)
 		log.SetOutput(os.Stderr)
 	} else {
 		log.SetOutput(io.Discard)
@@ -47,9 +46,9 @@ func Run() error {
 	var formatFunc func([]*ColistEntry, io.Writer) error
 	switch output {
 	case "text":
-		formatFunc = OutputText
+		formatFunc = outputText
 	case "json":
-		formatFunc = OutputJson
+		formatFunc = outputJson
 	default:
 		return fmt.Errorf("not supported output: select \"text\" or \"json\"")
 	}
@@ -112,37 +111,37 @@ func usage(w io.Writer) {
 // run opens repository at path, get changed files between the current branch and remote/baseBranch,
 // and returns code owners lists that match any of the changed files.
 func run(path string, remote string, baseBranch string) ([]*ColistEntry, error) {
-	repo, err := NewRepository(path)
+	repo, err := newRepository(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init repo: %w", err)
 	}
 
-	currentCommit, currentTree, err := CurrentCommitAndTree(repo)
+	currentCommit, currentTree, err := currentCommitAndTree(repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current commit and tree: %w", err)
 	}
 
-	baseCommit, baseTree, err := BaseCommitAndTree(repo, remote, baseBranch)
+	baseCommit, baseTree, err := baseCommitAndTree(repo, remote, baseBranch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get base commit and tree: %w", err)
 	}
 
-	_, mbTree, err := MergeBaseCommitAndTree(currentCommit, baseCommit)
+	_, mbTree, err := mergeBaseCommitAndTree(currentCommit, baseCommit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get merge base commit and tree: %w", err)
 	}
 
-	files, err := ChangedFiles(currentTree, mbTree)
+	files, err := changedFiles(currentTree, mbTree)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get changed files: %w", err)
 	}
 
-	cofile, err := CodeOwnersFile(baseTree)
+	cofile, err := codeOwnersFile(baseTree)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open CODEOWNERS: %w", err)
 	}
 
-	colists, err := CodeOwnersLists(cofile, files)
+	colists, err := codeOwnersLists(cofile, files)
 	if err != nil {
 		return nil, fmt.Errorf("failed get code owners lists: %w", err)
 	}

@@ -8,8 +8,8 @@ import (
 	"github.com/hmarr/codeowners"
 )
 
-// CodeOwnersLists extracts a set of code owners from codeOwnerFile that match any of files.
-func CodeOwnersLists(codeOwnerFile io.Reader, files []string) ([]*ColistEntry, error) {
+// codeOwnersLists extracts a set of code owners from codeOwnerFile that match any of files.
+func codeOwnersLists(codeOwnerFile io.Reader, files []string) ([]*ColistEntry, error) {
 	ruleset, err := codeowners.ParseFile(codeOwnerFile)
 	if err != nil {
 		return nil, fmt.Errorf("parse: %w", err)

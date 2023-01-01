@@ -12,8 +12,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-// NewRepository opens a git repository at the path.
-func NewRepository(path string) (*gogit.Repository, error) {
+// newRepository opens a git repository at the path.
+func newRepository(path string) (*gogit.Repository, error) {
 	opt := gogit.PlainOpenOptions{DetectDotGit: true}
 	repo, err := gogit.PlainOpenWithOptions(path, &opt)
 	if err != nil {
@@ -23,8 +23,8 @@ func NewRepository(path string) (*gogit.Repository, error) {
 	return repo, nil
 }
 
-// CurrentCommitAndTree returns a commit object and a tree object of the repo.
-func CurrentCommitAndTree(repo *gogit.Repository) (*object.Commit, *object.Tree, error) {
+// currentCommitAndTree returns a commit object and a tree object of the repo.
+func currentCommitAndTree(repo *gogit.Repository) (*object.Commit, *object.Tree, error) {
 	ref, err := repo.Head()
 	if err != nil {
 		return nil, nil, fmt.Errorf("HEAD: %w", err)
@@ -43,8 +43,8 @@ func CurrentCommitAndTree(repo *gogit.Repository) (*object.Commit, *object.Tree,
 	return commit, tree, nil
 }
 
-// BaseCommitAndTree returns a commit object and a tree object at the remote and the branch of the repo.
-func BaseCommitAndTree(repo *gogit.Repository, remote, branch string) (*object.Commit, *object.Tree, error) {
+// baseCommitAndTree returns a commit object and a tree object at the remote and the branch of the repo.
+func baseCommitAndTree(repo *gogit.Repository, remote, branch string) (*object.Commit, *object.Tree, error) {
 	refs := baseRefCandidates(remote, branch)
 
 	var ref *plumbing.Reference
@@ -104,8 +104,8 @@ func baseRefCandidates(remote, branch string) []string {
 	}
 }
 
-// CodeOwnersFile returns a reader for CODEOWNERS file.
-func CodeOwnersFile(tree *object.Tree) (io.Reader, error) {
+// codeOwnersFile returns a reader for CODEOWNERS file.
+func codeOwnersFile(tree *object.Tree) (io.Reader, error) {
 	path := ".github/CODEOWNERS"
 	f, err := tree.File(path)
 	if err != nil {
@@ -115,8 +115,8 @@ func CodeOwnersFile(tree *object.Tree) (io.Reader, error) {
 	return f.Reader()
 }
 
-// MergeBaseCommitAndTree returns a commit object and a tree object of the given commits c1 and c2.
-func MergeBaseCommitAndTree(c1, c2 *object.Commit) (*object.Commit, *object.Tree, error) {
+// mergeBaseCommitAndTree returns a commit object and a tree object of the given commits c1 and c2.
+func mergeBaseCommitAndTree(c1, c2 *object.Commit) (*object.Commit, *object.Tree, error) {
 	commits, err := c1.MergeBase(c2)
 	if err != nil || len(commits) == 0 {
 		return nil, nil, fmt.Errorf("merge base of %s and %s : %w", c1.Hash, c2.Hash, err)
@@ -130,8 +130,8 @@ func MergeBaseCommitAndTree(c1, c2 *object.Commit) (*object.Commit, *object.Tree
 	return commits[0], tree, nil
 }
 
-// ChangedFiles returns a list of files changed between the tree object from and to
-func ChangedFiles(to, from *object.Tree) ([]string, error) {
+// changedFiles returns a list of files changed between the tree object from and to
+func changedFiles(to, from *object.Tree) ([]string, error) {
 	changes, err := object.DiffTree(to, from)
 	if err != nil {
 		return nil, fmt.Errorf("diff: %w", err)
