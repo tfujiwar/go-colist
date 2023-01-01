@@ -82,26 +82,26 @@ func baseRefCandidates(remote, branch string) []string {
 	if remote == "" {
 		if branch == "" {
 			return []string{
-				"refs/remote/origin/main",
-				"refs/remote/origin/master",
+				"refs/remotes/origin/main",
+				"refs/remotes/origin/master",
 				"refs/heads/main",
 				"refs/heads/master",
 			}
 		} else {
 			return []string{
-				"refs/remote/origin/" + branch,
+				"refs/remotes/origin/" + branch,
 				"refs/heads/" + branch,
 			}
 		}
 	} else {
 		if branch == "" {
 			return []string{
-				"refs/remote/" + remote + "/main",
-				"refs/remote/" + remote + "/master",
+				"refs/remotes/" + remote + "/main",
+				"refs/remotes/" + remote + "/master",
 			}
 		} else {
 			return []string{
-				"refs/remote/" + remote + "/" + branch,
+				"refs/remotes/" + remote + "/" + branch,
 			}
 		}
 	}
