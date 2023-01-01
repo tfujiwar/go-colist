@@ -13,6 +13,7 @@ type ColistEntry struct {
 	Owners  []string `json:"owners"`
 }
 
+// Run runs a main logic of colist
 func Run() error {
 	var output string
 	flag.StringVar(&output, "o", "text", "")
@@ -33,10 +34,23 @@ func Run() error {
 	flag.Parse()
 
 	if help {
-		usage(os.Stdout)
-		os.Exit(0)
+		fmt.Printf("A command to show GitHub code owners of files that were modified in a current branch\n")
+		fmt.Printf("\n")
+		fmt.Printf("Usage:\n")
+		fmt.Printf("  colist [flags]                        : compare with remote or local main branch\n")
+		fmt.Printf("  colist [flags] <BASE_BRANCH>          : compare with remote or local <BASE_BRANCH>\n")
+		fmt.Printf("  colist [flags] <REMOTE> <BASE_BRANCH> : compare with <REMOTE>/<BASE_BRANCH>\n")
+		fmt.Printf("\n")
+		fmt.Printf("Flags:\n")
+		fmt.Printf("  -o, --output text|json : output format\n")
+		fmt.Printf("  -d, --dir <DIR>        : repository directory\n")
+		fmt.Printf("  -v, --verbose          : show debug log\n")
+		fmt.Printf("  -h, --help             : show this message\n")
+		fmt.Printf("\n")
+		return nil
 	}
 
+	// Use log package for debug log
 	if verbose {
 		log.SetOutput(os.Stderr)
 	} else {
@@ -50,7 +64,7 @@ func Run() error {
 	case "json":
 		formatFunc = outputJson
 	default:
-		return fmt.Errorf("not supported output: select \"text\" or \"json\"")
+		return fmt.Errorf("[ERROR] not supported output: select \"text\" or \"json\"")
 	}
 
 	args := flag.Args()
@@ -68,8 +82,7 @@ func Run() error {
 		remote = args[0]
 		baseBranch = args[1]
 	default:
-		usage(os.Stderr)
-		os.Exit(1)
+		return fmt.Errorf("[ERROR] too many args")
 	}
 
 	log.Printf("[DEBUG] output     : %v\n", output)
@@ -81,31 +94,15 @@ func Run() error {
 
 	colists, err := run(dir, remote, baseBranch)
 	if err != nil {
-		return err
+		return fmt.Errorf("[ERROR] %w", err)
 	}
 
 	err = formatFunc(colists, os.Stdout)
 	if err != nil {
-		return err
+		return fmt.Errorf("[ERROR] %w", err)
 	}
 
 	return nil
-}
-
-func usage(w io.Writer) {
-	fmt.Fprintf(w, "List GitHub CODEOWNERS of changed files on a current branch\n")
-	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "Usage:\n")
-	fmt.Fprintf(w, "  colist [flags]                        : compare with remote or local main branch\n")
-	fmt.Fprintf(w, "  colist [flags] <BASE_BRANCH>          : compare with remote or local <BASE_BRANCH>\n")
-	fmt.Fprintf(w, "  colist [flags] <REMOTE> <BASE_BRANCH> : compare with <REMOTE>/<BASE_BRANCH>\n")
-	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "Flags:\n")
-	fmt.Fprintf(w, "  -o, --output text|json : output format\n")
-	fmt.Fprintf(w, "  -d, --dir <DIR>        : repository directory\n")
-	fmt.Fprintf(w, "  -v, --verbose          : show debug log\n")
-	fmt.Fprintf(w, "  -h, --help             : show this message\n")
-	fmt.Fprintf(w, "\n")
 }
 
 // run opens repository at path, get changed files between the current branch and remote/baseBranch,

@@ -12,7 +12,7 @@ func main() {
 	log.SetFlags(0)
 
 	if err := colist.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 

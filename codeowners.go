@@ -27,7 +27,7 @@ func codeOwnersLists(codeOwnerFile io.Reader, files []string) ([]*ColistEntry, e
 
 		owners := make([]string, 0)
 		for _, o := range rule.Owners {
-			owners = append(owners, o.Value)
+			owners = append(owners, o.String())
 		}
 		sort.Slice(owners, func(i, j int) bool { return owners[i] < owners[j] })
 

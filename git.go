@@ -75,6 +75,9 @@ func baseCommitAndTree(repo *gogit.Repository, remote, branch string) (*object.C
 	return commit, tree, nil
 }
 
+// baseRefCandidates returns a list of ref candidates ordered by the priority.
+// Include remote and local refs if remote is empty.
+// Include main and master refs if branch is empty.
 func baseRefCandidates(remote, branch string) []string {
 	if remote == "" {
 		if branch == "" {

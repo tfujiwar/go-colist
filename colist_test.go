@@ -198,13 +198,13 @@ func TestRun(t *testing.T) {
 		t.Errorf("rules[2].Pattern = %v, want %v", rules[2].Pattern, "d.txt")
 	}
 
-	if rules[0].Owners[0] != "owner-b" {
-		t.Errorf("rules[0].Owners[0] = %v, want %v", rules[0].Owners[0], "owner-b")
+	if rules[0].Owners[0] != "@owner-b" {
+		t.Errorf("rules[0].Owners[0] = %v, want %v", rules[0].Owners[0], "@owner-b")
 	}
-	if rules[1].Owners[0] != "owner-c" {
-		t.Errorf("rules[1].Owners[0] = %v, want %v", rules[1].Owners[0], "owner-c")
+	if rules[1].Owners[0] != "@owner-c" {
+		t.Errorf("rules[1].Owners[0] = %v, want %v", rules[1].Owners[0], "@owner-c")
 	}
-	if rules[2].Owners[0] != "owner-d" {
-		t.Errorf("rules[2].Owners[0] = %v, want %v", rules[2].Owners[0], "owner-d")
+	if rules[2].Owners[0] != "@owner-d" {
+		t.Errorf("rules[2].Owners[0] = %v, want %v", rules[2].Owners[0], "@owner-d")
 	}
 }
