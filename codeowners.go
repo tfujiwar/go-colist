@@ -8,23 +8,18 @@ import (
 	"github.com/hmarr/codeowners"
 )
 
-type Rule struct {
-	Pattern string   `json:"pattern"`
-	Owners  []string `json:"owners"`
-}
-
-// MatchRules extracts a set of codeowner rules from `codeownerFile“ that match any of `files`.
-func MatchedRules(codeownerFile io.Reader, files []string) ([]*Rule, error) {
-	ruleset, err := codeowners.ParseFile(codeownerFile)
+// CodeOwnersLists extracts a set of code owners from codeOwnerFile that match any of files.
+func CodeOwnersLists(codeOwnerFile io.Reader, files []string) ([]*ColistEntry, error) {
+	ruleset, err := codeowners.ParseFile(codeOwnerFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse CODEOWNERS: %w", err)
+		return nil, fmt.Errorf("parse: %w", err)
 	}
 
-	matched := make(map[string]*Rule)
+	matched := make(map[string]*ColistEntry)
 	for _, f := range files {
 		rule, err := ruleset.Match(f)
 		if err != nil {
-			return nil, fmt.Errorf("failed to match CODEOWNERS rule: %w", err)
+			return nil, fmt.Errorf("match rules for %s: %w", f, err)
 		}
 		if rule == nil {
 			continue
@@ -36,17 +31,17 @@ func MatchedRules(codeownerFile io.Reader, files []string) ([]*Rule, error) {
 		}
 		sort.Slice(owners, func(i, j int) bool { return owners[i] < owners[j] })
 
-		matched[rule.RawPattern()] = &Rule{
+		matched[rule.RawPattern()] = &ColistEntry{
 			Pattern: rule.RawPattern(),
 			Owners:  owners,
 		}
 	}
 
-	matchedList := make([]*Rule, 0)
+	colists := make([]*ColistEntry, 0)
 	for _, r := range matched {
-		matchedList = append(matchedList, r)
+		colists = append(colists, r)
 	}
 
-	sort.Slice(matchedList, func(i, j int) bool { return matchedList[i].Pattern < matchedList[j].Pattern })
-	return matchedList, nil
+	sort.Slice(colists, func(i, j int) bool { return colists[i].Pattern < colists[j].Pattern })
+	return colists, nil
 }

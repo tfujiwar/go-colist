@@ -41,7 +41,7 @@ func main() {
 		log.SetOutput(io.Discard)
 	}
 
-	var formatFunc func([]*colist.Rule, io.Writer) error
+	var formatFunc func([]*colist.ColistEntry, io.Writer) error
 	switch output {
 	case "text":
 		formatFunc = colist.OutputText
@@ -78,13 +78,13 @@ func main() {
 	log.Printf("[DEBUG] remote     : %v\n", remote)
 	log.Printf("[DEBUG] baseBranch : %v\n", baseBranch)
 
-	rules, err := colist.Main(dir, remote, baseBranch)
+	colists, err := colist.Main(dir, remote, baseBranch)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
 		os.Exit(1)
 	}
 
-	err = formatFunc(rules, os.Stdout)
+	err = formatFunc(colists, os.Stdout)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
 		os.Exit(1)

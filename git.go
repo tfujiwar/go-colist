@@ -12,127 +12,129 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-type Repository struct {
-	currentTree *object.Tree
-	latestTree  *object.Tree
-	baseTree    *object.Tree
-}
-
-// NewRepositoy constructs a new Repository struct.
-// It tries to find baseBranch from remote or local if `remote“ is empty
-// It tries to find main or master branch if `baseBranch“ is empty,
-func NewRepository(path string, remote string, baseBranch string) (*Repository, error) {
+// NewRepository opens a git repository at the path.
+func NewRepository(path string) (*gogit.Repository, error) {
 	opt := gogit.PlainOpenOptions{DetectDotGit: true}
 	repo, err := gogit.PlainOpenWithOptions(path, &opt)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open repo: %w", err)
+		return nil, fmt.Errorf("open repo at %s: %w", path, err)
 	}
 
+	return repo, nil
+}
+
+// CurrentCommitAndTree returns a commit object and a tree object of the repo.
+func CurrentCommitAndTree(repo *gogit.Repository) (*object.Commit, *object.Tree, error) {
 	ref, err := repo.Head()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get HEAD: %w", err)
+		return nil, nil, fmt.Errorf("HEAD: %w", err)
 	}
 
 	commit, err := repo.CommitObject(ref.Hash())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get commit: %w", err)
+		return nil, nil, fmt.Errorf("commit at %s: %w", ref.Hash(), err)
 	}
 
 	tree, err := commit.Tree()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current tree: %w", err)
+		return nil, nil, fmt.Errorf("tree at %s: %w", ref.Hash(), err)
 	}
 
-	var refs []string
-	if remote == "" {
-		if baseBranch == "" {
-			refs = []string{
-				"refs/remote/origin/main",
-				"refs/remote/origin/master",
-				"refs/heads/main",
-				"refs/heads/master",
-			}
-		} else {
-			refs = []string{
-				"refs/remote/origin/" + baseBranch,
-				"refs/heads/" + baseBranch,
-			}
-		}
-	} else {
-		if baseBranch == "" {
-			refs = []string{
-				"refs/remote/" + remote + "/main",
-				"refs/remote/" + remote + "/master",
-			}
-		} else {
-			refs = []string{
-				"refs/remote/" + remote + "/" + baseBranch,
-			}
-		}
-	}
+	return commit, tree, nil
+}
 
-	var baseRef *plumbing.Reference
+// BaseCommitAndTree returns a commit object and a tree object at the remote and the branch of the repo.
+func BaseCommitAndTree(repo *gogit.Repository, remote, branch string) (*object.Commit, *object.Tree, error) {
+	refs := baseRefCandidates(remote, branch)
+
+	var ref *plumbing.Reference
 	for _, r := range refs {
-		baseRef, err = repo.Reference(plumbing.ReferenceName(r), false)
+		var err error
+		ref, err = repo.Reference(plumbing.ReferenceName(r), false)
 		if err == nil {
 			log.Printf("[DEBUG] found baseRef : %s\n", r)
 			break
 		}
 		log.Printf("[DEBUG] tried baseRef : %s\n", r)
 	}
-	if baseRef == nil {
-		return nil, fmt.Errorf("failed to get any of refs: %s", strings.Join(refs, ", "))
+
+	if ref == nil {
+		return nil, nil, fmt.Errorf("cannot find any of refs: %s", strings.Join(refs, ", "))
 	}
 
-	baseHead, err := repo.CommitObject(baseRef.Hash())
+	commit, err := repo.CommitObject(ref.Hash())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get base commit: %w", err)
+		return nil, nil, fmt.Errorf("commit at %s: %w", ref.Hash(), err)
 	}
 
-	baseCommits, err := commit.MergeBase(baseHead)
-	if err != nil || len(baseCommits) == 0 {
-		return nil, fmt.Errorf("failed to get merge base: %w", err)
-	}
-
-	baseTree, err := baseCommits[0].Tree()
+	tree, err := commit.Tree()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get base tree: %w", err)
+		return nil, nil, fmt.Errorf("tree at %s: %w", ref.Hash(), err)
 	}
 
-	latestTree, err := baseHead.Tree()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get latest tree: %w", err)
-	}
-
-	log.Printf("[DEBUG] current commit : %s %s\n", commit.Hash.String()[:8], strings.Split(commit.Message, "\n")[0])
-	log.Printf("[DEBUG] latest commit  : %s %s\n", baseHead.Hash.String()[:8], strings.Split(baseHead.Message, "\n")[0])
-	log.Printf("[DEBUG] merge base     : %s %s\n", baseCommits[0].Hash.String()[:8], strings.Split(baseCommits[0].Message, "\n")[0])
-
-	return &Repository{
-		currentTree: tree,
-		latestTree:  latestTree,
-		baseTree:    baseTree,
-	}, nil
+	return commit, tree, nil
 }
 
-func (r *Repository) OwnersFile() (io.Reader, error) {
-	f, err := r.currentTree.File(".github/CODEOWNERS")
-	if err != nil {
-		return nil, fmt.Errorf("failed to find CODEOWNERS: %w", err)
+func baseRefCandidates(remote, branch string) []string {
+	if remote == "" {
+		if branch == "" {
+			return []string{
+				"refs/remote/origin/main",
+				"refs/remote/origin/master",
+				"refs/heads/main",
+				"refs/heads/master",
+			}
+		} else {
+			return []string{
+				"refs/remote/origin/" + branch,
+				"refs/heads/" + branch,
+			}
+		}
+	} else {
+		if branch == "" {
+			return []string{
+				"refs/remote/" + remote + "/main",
+				"refs/remote/" + remote + "/master",
+			}
+		} else {
+			return []string{
+				"refs/remote/" + remote + "/" + branch,
+			}
+		}
 	}
-
-	reader, err := f.Reader()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read CODEOWNERS: %w", err)
-	}
-
-	return reader, nil
 }
 
-func (r *Repository) ChangedFiles() ([]string, error) {
-	changes, err := object.DiffTree(r.currentTree, r.baseTree)
+// CodeOwnersFile returns a reader for CODEOWNERS file.
+func CodeOwnersFile(tree *object.Tree) (io.Reader, error) {
+	path := ".github/CODEOWNERS"
+	f, err := tree.File(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get diffs: %w", err)
+		return nil, fmt.Errorf("at %s: %w", path, err)
+	}
+
+	return f.Reader()
+}
+
+// MergeBaseCommitAndTree returns a commit object and a tree object of the given commits c1 and c2.
+func MergeBaseCommitAndTree(c1, c2 *object.Commit) (*object.Commit, *object.Tree, error) {
+	commits, err := c1.MergeBase(c2)
+	if err != nil || len(commits) == 0 {
+		return nil, nil, fmt.Errorf("merge base of %s and %s : %w", c1.Hash, c2.Hash, err)
+	}
+
+	tree, err := commits[0].Tree()
+	if err != nil {
+		return nil, nil, fmt.Errorf("tree at %s: %w", commits[0].Hash, err)
+	}
+
+	return commits[0], tree, nil
+}
+
+// ChangedFiles returns a list of files changed between the tree object from and to
+func ChangedFiles(to, from *object.Tree) ([]string, error) {
+	changes, err := object.DiffTree(to, from)
+	if err != nil {
+		return nil, fmt.Errorf("diff: %w", err)
 	}
 
 	files := make([]string, 0)
